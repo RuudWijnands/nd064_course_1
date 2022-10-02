@@ -12,7 +12,6 @@ connection_count: int = 0
 def get_db_connection():
     connection = sqlite3.connect('database.db')
     connection.row_factory = sqlite3.Row
-    app.logger.debug("DB connection established")
     global connection_count
     connection_count += 1
     return connection
@@ -50,16 +49,16 @@ def index():
 def post(post_id):
     post = get_post(post_id)
     if post is None:
-        app.logger.debug("Non-existing article retrieved!")
+        app.logger.info("Non-existing article retrieved!")
         return render_template('404.html'), 404
     else:
-        app.logger.debug("Article \"%s\" retrieved!", post[2])
+        app.logger.info("Article \"%s\" retrieved!", post[2])
         return render_template('post.html', post=post)
 
 # Define the About Us page
 @app.route('/about')
 def about():
-    app.logger.debug("\"About Us\" page retrieved!")
+    app.logger.info("\"About Us\" page retrieved!")
     return render_template('about.html')
 
 # Define the post creation functionality 
@@ -77,7 +76,7 @@ def create():
                          (title, content))
             connection.commit()
             connection.close()
-            app.logger.debug("New article \"%s\" created!", title)
+            app.logger.info("New article \"%s\" created!", title)
 
             return redirect(url_for('index'))
 
@@ -85,17 +84,20 @@ def create():
 
 @app.route('/healthz')
 def healthz():
-  response = app.response_class(
+    app.logger.info("Retrieved healthz!")
+    response = app.response_class(
           response=json.dumps({"result":"OK - healthy"}),
           status=200,
           mimetype='application/json'
-  )
-  return response
+    )
+    return response
 
 @app.route('/metrics')
 def metrics():
+    post_count = get_post_count()
+    app.logger.info("Retrieved metrics. db_connection_count: %r, post_count: %r", connection_count, post_count)
     response = app.response_class(
-        response=json.dumps({"db_connection_count": connection_count, "post_count": get_post_count()}),
+        response=json.dumps({"db_connection_count": connection_count, "post_count": post_count}),
         status=200,
         mimetype='application/json'
     )
@@ -103,6 +105,5 @@ def metrics():
 
 # start the application on port 3111
 if __name__ == "__main__":
-    logging.StreamHandler(sys.stdout)
-    logging.basicConfig(filename='app.log', level=logging.DEBUG, format="%(levelname)s:%(name)s:%(asctime)s, %(message)s", datefmt="%d/%m/%Y, %H:%M:%S")
+    logging.basicConfig(level=logging.DEBUG, format="%(levelname)s:%(name)s:%(asctime)s, %(message)s", datefmt="%d/%m/%Y, %H:%M:%S", stream=sys.stdout)
     app.run(host='0.0.0.0', port='3111')

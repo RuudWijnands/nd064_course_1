@@ -1,5 +1,3 @@
-Try this
-
 Because I am running a Mac M1 I cannot use VirtualBox.
 Unfortunately, it was not mentioned that the training currently does not provide support for Mac M1.
 Instead of using Vagrant I ran everything directly on my Mac using Minikube.
